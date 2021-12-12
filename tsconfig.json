@@ -1,0 +1,14 @@
+{
+    "include": [
+        "./src/**/*.ts"
+    ],
+    "compilerOptions": {
+        "target": "ES2021",
+        "module": "esnext",
+        "lib": [
+            "esnext"
+        ],
+        "moduleResolution": "node",
+        "outDir": "./dist",
+    },
+}
