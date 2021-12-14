@@ -2,10 +2,12 @@ import express from "express"
 import { config as dotenvConfig } from "dotenv"
 import cors from "cors"
 import helmet from "helmet"
+import mongoose from "mongoose"
 
 dotenvConfig()
 
-const app = express()
+export const db = await mongoose.connect(process.env.MONGO_URI, {})
+export const app = express()
 
 app.use(cors())
 app.use(helmet())
