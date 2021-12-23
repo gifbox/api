@@ -4,6 +4,8 @@ import cors from "cors"
 import helmet from "helmet"
 import mongoose from "mongoose"
 
+import UserRouter from "./routes/user.js"
+
 dotenvConfig()
 
 export const db = await mongoose.connect(process.env.MONGO_URI, {})
@@ -17,6 +19,8 @@ app.get("/", (req, res) => {
         status: "ok",
     })
 })
+
+app.use("/user", UserRouter)
 
 app.use((req, res, next) => {
     res.status(404).json({
