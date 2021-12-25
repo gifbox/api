@@ -1,4 +1,6 @@
-import { Schema } from "mongoose"
+import mongoose from "mongoose"
+
+const { Schema } = mongoose
 
 export const SuspensionStateSchema = new Schema({
     _id: {

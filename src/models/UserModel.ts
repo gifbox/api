@@ -1,17 +1,23 @@
 import mongoose from "mongoose"
-import { SuspensionStateSchema } from "./StructureSchemas"
+import { SuspensionStateSchema } from "./StructureSchemas.js"
 
 const UserSchema = new mongoose.Schema({
+    _id: {
+        type: String,
+        required: true,
+        unique: true,
+    },
     displayName: {
         type: String,
         required: true,
         minlength: 1,
         maxlength: 50,
     },
-    _id: {
+    username: {
         type: String,
         required: true,
-        unique: true,
+        minlength: 1,
+        maxlength: 50,
     },
     email: {
         type: String,
@@ -38,7 +44,7 @@ const UserSchema = new mongoose.Schema({
         required: false,
         default: null,
     },
-    following: {
+    followers: {
         type: [String],
         required: false,
         default: [],
