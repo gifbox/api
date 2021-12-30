@@ -5,6 +5,7 @@ import helmet from "helmet"
 import mongoose from "mongoose"
 
 import UserRouter from "./routes/user.js"
+import SessionRouter from "./routes/session.js"
 
 dotenvConfig()
 
@@ -22,6 +23,7 @@ app.get("/", (req, res) => {
 })
 
 app.use("/user", UserRouter)
+app.use("/session", SessionRouter)
 
 app.use((req, res, next) => {
     res.status(404).json({

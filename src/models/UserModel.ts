@@ -4,8 +4,6 @@ import { SuspensionStateSchema } from "./StructureSchemas.js"
 const UserSchema = new mongoose.Schema({
     _id: {
         type: String,
-        required: true,
-        unique: true,
     },
     displayName: {
         type: String,
