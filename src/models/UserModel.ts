@@ -1,5 +1,5 @@
 import mongoose from "mongoose"
-import { SuspensionStateSchema } from "./StructureSchemas.js"
+import { FileInformationSchema, SuspensionStateSchema } from "./StructureSchemas.js"
 
 const UserSchema = new mongoose.Schema({
     _id: {
@@ -39,6 +39,11 @@ const UserSchema = new mongoose.Schema({
     },
     suspensionState: {
         type: SuspensionStateSchema,
+        required: false,
+        default: null,
+    },
+    avatar: {
+        type: FileInformationSchema,
         required: false,
         default: null,
     },

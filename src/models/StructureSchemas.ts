@@ -24,6 +24,10 @@ export const FileInformationSchema = new Schema({
         type: String,
         required: true,
     },
+    originalFileName: {
+        type: String,
+        required: true,
+    },
     extension: {
         type: String,
         required: true,

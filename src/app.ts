@@ -4,10 +4,11 @@ import cors from "cors"
 import helmet from "helmet"
 import mongoose from "mongoose"
 
+dotenvConfig()
+
 import UserRouter from "./routes/user.js"
 import SessionRouter from "./routes/session.js"
-
-dotenvConfig()
+import PostRouter from "./routes/post.js"
 
 export const db = await mongoose.connect(process.env.MONGO_URI, {})
 export const app = express()
@@ -24,6 +25,7 @@ app.get("/", (req, res) => {
 
 app.use("/user", UserRouter)
 app.use("/session", SessionRouter)
+app.use("/post", PostRouter)
 
 app.use((req, res, next) => {
     res.status(404).json({
@@ -38,6 +40,9 @@ app.use((err, req, res, next) => {
     })
 })
 
+import { ensureBuckets } from "./lib/files.js"
+
 app.listen(process.env.PORT, () => {
     console.log(`Server listening on port ${process.env.PORT}`)
+    ensureBuckets()
 })
