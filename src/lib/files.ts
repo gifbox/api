@@ -48,3 +48,38 @@ export const putFile = (buffer: Buffer, filename: string, type: string) => {
         })
     })
 }
+
+export const getFile = (filename: string, type: string) => {
+    return new Promise<Buffer>((resolve, reject) => {
+        minioClient.getObject("gifbox", `${type}/${filename}`, (error, buffer) => {
+            if (error) {
+                reject(error)
+                return
+            }
+
+            let chunks: Buffer[] = []
+
+            buffer.on("data", (chunk) => {
+                chunks.push(chunk)
+            })
+            buffer.on("end", () => {
+                resolve(Buffer.concat(chunks))
+            })
+            buffer.on("error", (error) => {
+                reject(error)
+            })
+        })
+    })
+}
+
+export const deleteFile = (filename: string, type: string) => {
+    return new Promise<void>((resolve, reject) => {
+        minioClient.removeObject("gifbox", `${type}/${filename}`, (error) => {
+            if (error) {
+                reject(error)
+            } else {
+                resolve()
+            }
+        })
+    })
+}

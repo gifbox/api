@@ -8,7 +8,7 @@ import slug from "slug"
 import { nanoid } from "nanoid"
 import crypto from "crypto"
 import { gifToWebp } from "../lib/webp.js"
-import { putFile } from "../lib/files.js"
+import { deleteFile, putFile } from "../lib/files.js"
 import PostModel from "../models/PostModel.js"
 
 const router = express.Router()
@@ -55,7 +55,7 @@ router.post("/new", requireSession, upload({
         bucket: "posts",
         mimeType: file.mimetype,
         uploadDate: new Date(),
-        author: user.username,
+        author: user._id,
         size: file.size,
         sha512: crypto.createHash("sha512").update(webp).digest("hex"),
     }
@@ -68,7 +68,7 @@ router.post("/new", requireSession, upload({
         _id: id,
         title: req.body.title,
         slug: slug(req.body.title, { lower: true }).substr(0, 50),
-        author: user.username,
+        author: user._id,
         tags: req.body["tags[]"].map(tag => slug(tag, { lower: true })),
         file: fileObject,
         private: false,
@@ -79,6 +79,34 @@ router.post("/new", requireSession, upload({
     await post.save()
 
     res.json(post)
+})
+
+router.delete("/:id", requireSession, async (req, res) => {
+    if (!req.params.id)
+        return res.status(400).json({
+            error: "No post id"
+        })
+
+    const session = (req as any).session
+    const user = await UserModel.findById(session.userId)
+
+    const post = await PostModel.findById(req.params.id)
+    if (!post)
+        return res.status(400).json({
+            error: "Post not found"
+        })
+
+    if (post.author !== user._id)
+        return res.status(400).json({
+            error: "You are not the author of this post"
+        })
+
+    await deleteFile(post.file.fileName, "posts")
+    await post.remove()
+
+    res.json({
+        success: true,
+    })
 })
 
 export default router
