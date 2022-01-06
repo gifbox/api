@@ -3,11 +3,12 @@ import Joi from "joi"
 import UserModel from "../models/UserModel.js"
 import argon2 from "argon2"
 import { ulid } from "ulid"
+import { requireSession } from "../middleware/auth.js"
 
 const router = express.Router()
 
 const registrationSchema = Joi.object({
-    username: Joi.string().alphanum().min(3).max(50).required(),
+    username: Joi.string().alphanum().min(3).max(50).not("self").required(),
     email: Joi.string().email().required(),
     password: Joi.string().min(8).required()
 })
@@ -46,6 +47,29 @@ router.post("/register", async (req, res) => {
     const result = await user.save()
     const { hashedPassword, suspensionState, followers, verified, __v, ...rest } = result._doc
 
+    res.json(rest)
+})
+
+router.get("/self", requireSession, async (req, res) => {
+    const user = await UserModel.findById((req as any).session.userId)
+    if (!user)
+        return res.status(404).json({
+            error: "User not found — this should never happen"
+        })
+
+    const { hashedPassword, suspensionState, followers, __v, ...rest } = user._doc
+
+    res.json(rest)
+})
+
+router.get("/:username", async (req, res) => {
+    const user = await UserModel.findOne({ username: req.params.username })
+    if (!user)
+        return res.status(404).json({
+            error: "User not found"
+        })
+
+    const { hashedPassword, suspensionState, followers, __v, ...rest } = user._doc
     res.json(rest)
 })
 
