@@ -206,8 +206,6 @@ router.get("/info/:id", optionalSession, async (req, res) => {
             error: "Post not found"
         })
 
-    console.log(post)
-
     delete post._doc.private // Private is a reserved word, we cannot destructure it.
     post._doc.favorited = post._doc.favorites.includes((req as any).session?.userId ?? "")
     post._doc.favorites = post._doc.favorites.length
