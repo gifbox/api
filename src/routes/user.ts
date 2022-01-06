@@ -69,7 +69,7 @@ router.get("/:username", async (req, res) => {
             error: "User not found"
         })
 
-    const { hashedPassword, suspensionState, followers, __v, ...rest } = user._doc
+    const { hashedPassword, suspensionState, followers, __v, email, ...rest } = user._doc
     res.json(rest)
 })
 

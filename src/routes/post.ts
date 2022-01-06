@@ -2,7 +2,7 @@ import express, { Request } from "express"
 import Joi from "joi"
 import UserModel from "../models/UserModel.js"
 import { ulid } from "ulid"
-import { requireSession } from "../middleware/auth.js"
+import { optionalSession, requireSession } from "../middleware/auth.js"
 import upload, { FileArray, UploadedFile } from "express-fileupload"
 import slug from "slug"
 import { nanoid } from "nanoid"
@@ -78,7 +78,20 @@ router.post("/new", requireSession, upload({
     const post = new PostModel(postObject)
     await post.save()
 
-    res.json(post)
+    const author = await UserModel.findById(user._id, {
+        __v: 0,
+        hashedPassword: 0,
+        suspensionState: 0,
+        followers: 0,
+        email: 0,
+    })
+
+    res.json({
+        ...postObject,
+        author,
+        favorites: 0,
+        favorited: false,
+    })
 })
 
 router.delete("/:id", requireSession, async (req, res) => {
@@ -109,7 +122,7 @@ router.delete("/:id", requireSession, async (req, res) => {
     })
 })
 
-router.get("/popular", async (req, res) => {
+router.get("/popular", optionalSession, async (req, res) => {
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 10
     const skip = req.query.skip ? parseInt(req.query.skip as string) : 0
 
@@ -152,20 +165,28 @@ router.get("/popular", async (req, res) => {
         }
     ])
 
-    posts.forEach(post => {
+    for (let post of posts) {
+        post.favorited = post.favorites.includes((req as any).session?.userId)
         post.favorites = post.favorites.length
-    })
+        post.author = await UserModel.findById(post.author, {
+            __v: 0,
+            hashedPassword: 0,
+            suspensionState: 0,
+            followers: 0,
+            email: 0,
+        })
+    }
 
     res.json(posts)
 })
 
-router.get("/:id", async (req, res) => {
+router.get("/info/:id", optionalSession, async (req, res) => {
     if (!req.params.id)
         return res.status(400).json({
             error: "No post id"
         })
 
-    const { favorites, ...post } = await PostModel.findOne({ _id: req.params.id }, {
+    const post = await PostModel.findOne({ _id: req.params.id }, {
         __v: 0,
         private: 0,
         file: {
@@ -180,13 +201,16 @@ router.get("/:id", async (req, res) => {
         }
     })
 
-    delete post._doc.private // Private is a reserved word, we cannot destructure it.
-    post._doc.favorites = favorites.length
-
     if (!post)
         return res.status(400).json({
             error: "Post not found"
         })
+
+    console.log(post)
+
+    delete post._doc.private // Private is a reserved word, we cannot destructure it.
+    post._doc.favorited = post._doc.favorites.includes((req as any).session?.userId ?? "")
+    post._doc.favorites = post._doc.favorites.length
 
     res.json({ ...post._doc })
 })
@@ -197,7 +221,7 @@ const searchSchema = Joi.object({
     limit: Joi.number().integer().min(1).max(100).default(10),
 })
 
-router.post("/search", async (req, res) => {
+router.post("/search", optionalSession, async (req, res) => {
     const { error, value } = searchSchema.validate(req.body)
     if (error)
         return res.status(400).json({
@@ -233,10 +257,18 @@ router.post("/search", async (req, res) => {
     }).exec()
 
     // Remove the field "private" from the posts and replace favorites with the number of favorites
-    posts.forEach(post => {
+    for (let post of posts) {
         delete post._doc.private
+        post._doc.favorited = post._doc.favorites.includes((req as any).session?.userId ?? "")
         post._doc.favorites = post._doc.favorites.length
-    })
+        post._doc.author = await UserModel.findById(post._doc.author, {
+            __v: 0,
+            hashedPassword: 0,
+            suspensionState: 0,
+            followers: 0,
+            email: 0,
+        })
+    }
 
     res.json(posts)
 })

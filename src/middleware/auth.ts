@@ -30,3 +30,28 @@ export const requireSession = (req, res, next) => {
             })
     }
 }
+
+export const optionalSession = (req, res, next) => {
+    if (!req.headers.authorization)
+        return next()
+
+    const [type, token] = req.headers.authorization.split(" ")
+    switch (type) {
+        case "Bearer":
+            SessionModel.findOne({ token })
+                .then(session => {
+                    if (!session)
+                        return next()
+
+                    req.session = session
+                    next()
+                }).catch(error => {
+                    res.status(500).json({
+                        error: error.message
+                    })
+                })
+            break
+        default:
+            next()
+    }
+}
