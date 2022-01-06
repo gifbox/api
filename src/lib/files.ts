@@ -83,3 +83,15 @@ export const deleteFile = (filename: string, type: string) => {
         })
     })
 }
+
+export const fileExists = (filename: string, type: string) => {
+    return new Promise<boolean>((resolve, reject) => {
+        minioClient.statObject("gifbox", `${type}/${filename}`, (error, stat) => {
+            if (error) {
+                resolve(false)
+            } else {
+                resolve(true)
+            }
+        })
+    })
+}

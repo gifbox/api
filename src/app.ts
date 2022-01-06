@@ -9,6 +9,7 @@ dotenvConfig()
 import UserRouter from "./routes/user.js"
 import SessionRouter from "./routes/session.js"
 import PostRouter from "./routes/post.js"
+import FileRouter from "./routes/file.js"
 
 export const db = await mongoose.connect(process.env.MONGO_URI, {})
 export const app = express()
@@ -26,6 +27,7 @@ app.get("/", (req, res) => {
 app.use("/user", UserRouter)
 app.use("/session", SessionRouter)
 app.use("/post", PostRouter)
+app.use("/file", FileRouter)
 
 app.use((req, res, next) => {
     res.status(404).json({
