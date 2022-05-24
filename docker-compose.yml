@@ -1,0 +1,48 @@
+version: '3.4'
+
+services:
+  api:
+    image: api
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      MONGO_URI: "mongodb://mongo:27017/gifbox"
+      MONGO_USE_CREDENTIALS: "true"
+      MONGO_USERNAME: gifbox
+      MONGO_PASSWORD: gifbox
+      MINIO_ENDPOINT: "minio"
+      MINIO_PORT: 9000
+      MINIO_USE_SSL: "false"
+      MINIO_ACCESS_KEY: gifbox
+      MINIO_SECRET_KEY: gifbox123
+      MINIO_REGION: default
+    ports:
+      - 5000:5000
+  mongo:
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_DATABASE: gifbox
+      MONGO_INITDB_ROOT_USERNAME: gifbox
+      MONGO_INITDB_ROOT_PASSWORD: gifbox
+    expose:
+      - 27017
+    ports:
+      - 5001:27017
+    volumes:
+      - ./run/mongo:/data/db
+  minio:
+    image: minio/minio:latest
+    command: server --console-address ":9001" /data
+    environment:
+      MINIO_ROOT_USER: gifbox
+      MINIO_ROOT_PASSWORD: gifbox123
+    expose:
+      - 9000
+      - 9001
+    ports:
+      - 5002:9001
+    volumes:
+      - ./run/minio:/data

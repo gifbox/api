@@ -11,7 +11,12 @@ import SessionRouter from "./routes/session.js"
 import PostRouter from "./routes/post.js"
 import FileRouter from "./routes/file.js"
 
-export const db = await mongoose.connect(process.env.MONGO_URI, {})
+export const db = await mongoose.connect(process.env.MONGO_URI, process.env.MONGO_USE_CREDENTIALS === "true" ? {
+    auth: {
+        username: process.env.MONGO_USERNAME,
+        password: process.env.MONGO_PASSWORD
+    }
+} : {})
 export const app = express()
 
 app.use(cors())

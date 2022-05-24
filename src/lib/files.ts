@@ -14,7 +14,7 @@ export const minioClient = new minio.Client({
 const makeBucket = async (bucketName: string) => {
     try {
         await minioClient.makeBucket(bucketName, process.env.MINIO_REGION)
-        console.log(`Initialized previously non-existant bucket ${bucketName} on Minio/S3`)
+        console.log(`Initialized previously non-existent bucket ${bucketName} on Minio/S3`)
     } catch (err) {
         if (err.code === "BucketAlreadyOwnedByYou") {
             console.log(`Bucket ${bucketName} already exists on Minio/S3, but creation was attempted. This is a bug.`)
