@@ -62,7 +62,7 @@ router.post("/new", requireSession, upload({
 
     await putFile(webp, fileName, "posts")
 
-    const id = ulid()
+    const id = nanoid(11)
 
     const postObject = {
         _id: id,
