@@ -5,7 +5,6 @@ const { Schema } = mongoose
 export const SuspensionStateSchema = new Schema({
     _id: {
         type: String,
-        required: false
     },
     expirationDate: {
         type: Date,
@@ -16,8 +15,6 @@ export const SuspensionStateSchema = new Schema({
 export const FileInformationSchema = new Schema({
     _id: {
         type: String,
-        required: true,
-        unique: true,
     },
     fileName: {
         type: String,

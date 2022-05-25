@@ -39,7 +39,7 @@ router.post("/register", async (req, res) => {
     const user = new UserModel({
         _id: id,
         displayName: req.body.username,
-        username: req.body.username,
+        username: req.body.username.toLowerCase(),
         email: req.body.email,
         hashedPassword: hash
     })
