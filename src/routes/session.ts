@@ -58,6 +58,12 @@ router.get("/sessions", requireSession, async (req, res) => {
     res.json(sessions)
 })
 
+
+router.get("/current", requireSession, async (req, res) => {
+    const session = await SessionModel.findOne({ _id: (req as any).session._id }, { __v: 0 })
+    res.json(session)
+})
+
 const deleteSchema = Joi.object({
     session: Joi.string().required(),
 })

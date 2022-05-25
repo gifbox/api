@@ -6,11 +6,14 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
+    depends_on:
+      - mongo
+      - minio
     environment:
       NODE_ENV: production
       PORT: 5000
       MONGO_URI: "mongodb://mongo:27017/gifbox"
-      MONGO_USE_CREDENTIALS: "true"
+      MONGO_USE_CREDENTIALS: "false"
       MONGO_USERNAME: gifbox
       MONGO_PASSWORD: gifbox
       MINIO_ENDPOINT: "minio"
@@ -23,10 +26,6 @@ services:
       - 5000:5000
   mongo:
     image: mongo:latest
-    environment:
-      MONGO_INITDB_DATABASE: gifbox
-      MONGO_INITDB_ROOT_USERNAME: gifbox
-      MONGO_INITDB_ROOT_PASSWORD: gifbox
     expose:
       - 27017
     ports:
