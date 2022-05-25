@@ -5,8 +5,7 @@ const { Schema } = mongoose
 export const SuspensionStateSchema = new Schema({
     _id: {
         type: String,
-        required: true,
-        unique: true,
+        required: false
     },
     expirationDate: {
         type: Date,
