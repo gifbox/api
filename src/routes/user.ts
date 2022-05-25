@@ -22,7 +22,7 @@ router.post("/register", async (req, res) => {
         return
     }
 
-    if (await UserModel.findOne({ username: req.body.username }))
+    if (await UserModel.findOne({ username: req.body.username.toLowerCase() }))
         return res.status(400).json({
             error: "Username already exists"
         })
