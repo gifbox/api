@@ -20,7 +20,9 @@ export const db = await mongoose.connect(process.env.MONGO_URI, process.env.MONG
 export const app = express()
 
 app.use(cors())
-app.use(helmet())
+app.use(helmet({
+    crossOriginResourcePolicy: false
+}))
 app.use(express.json())
 
 app.get("/", (req, res) => {

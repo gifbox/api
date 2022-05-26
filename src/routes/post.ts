@@ -209,6 +209,13 @@ router.get("/info/:id", optionalSession, async (req, res) => {
     delete post._doc.private // Private is a reserved word, we cannot destructure it.
     post._doc.favorited = post._doc.favorites.includes((req as any).session?.userId ?? "")
     post._doc.favorites = post._doc.favorites.length
+    post._doc.author = await UserModel.findById(post._doc.author, {
+        __v: 0,
+        hashedPassword: 0,
+        suspensionState: 0,
+        followers: 0,
+        email: 0,
+    })
 
     res.json({ ...post._doc })
 })
