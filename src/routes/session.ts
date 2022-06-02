@@ -1,5 +1,4 @@
 import express from "express"
-import Joi from "joi"
 import UserModel from "../models/UserModel.js"
 import SessionModel from "../models/SessionModel.js"
 import argon2 from "argon2"
@@ -7,35 +6,31 @@ import { ulid } from "ulid"
 import { User } from "../models/Types.js"
 import { nanoid } from "nanoid"
 import { requireSession } from "../middleware/auth.js"
+import { sessionCreateSchema, sessionModifySchema } from "./session.schemas.js"
 
 const router = express.Router()
 
-const createSchema = Joi.object({
-    email: Joi.string().email().required(),
-    password: Joi.string().min(8).required(),
-    sessionName: Joi.string().min(3).max(50).required(),
-})
-
 router.post("/create", async (req, res) => {
-    const { error } = createSchema.validate(req.body)
+    const { error, value } = sessionCreateSchema.validate(req.body)
     if (error)
         return res.status(400).json({
             error: error.details[0].message
         })
 
-    const user = await UserModel.findOne({ email: req.body.email }) as User
+    const { email, password, sessionName } = value
+
+    const user = await UserModel.findOne({ email }) as User
     if (!user)
         return res.status(400).json({
             error: "Invalid email or password"
         })
 
-    const passwordMatches = await argon2.verify(user.hashedPassword, req.body.password)
+    const passwordMatches = await argon2.verify(user.hashedPassword, password)
     if (!passwordMatches)
         return res.status(400).json({
             error: "Invalid email or password"
         })
 
-    const sessionName = req.body.sessionName
     const token = nanoid(64)
 
     const session = new SessionModel({
@@ -58,24 +53,16 @@ router.get("/sessions", requireSession, async (req, res) => {
     res.json(sessions)
 })
 
-
 router.get("/current", requireSession, async (req, res) => {
     const session = await SessionModel.findOne({ _id: (req as any).session._id }, { __v: 0 })
     res.json(session)
 })
 
-const deleteSchema = Joi.object({
-    session: Joi.string().required(),
-})
-
-router.post("/logout", requireSession, async (req, res) => {
-    const { error } = deleteSchema.validate(req.body)
-    if (error)
-        return res.status(400).json({
-            error: error.details[0].message
-        })
-
-    const session = await SessionModel.findOne({ _id: req.body.session })
+router.delete("/:id", requireSession, async (req, res) => {
+    const session = await SessionModel.findOne({
+        _id: req.params.id,
+        userId: (req as any).session.userId
+    })
     if (!session)
         return res.status(400).json({
             error: "Invalid session"
@@ -88,25 +75,27 @@ router.post("/logout", requireSession, async (req, res) => {
     })
 })
 
-const renameSchema = Joi.object({
-    session: Joi.string().required(),
-    sessionName: Joi.string().min(3).max(50).required(),
-})
-
-router.post("/rename", requireSession, async (req, res) => {
-    const { error } = renameSchema.validate(req.body)
+router.patch("/:id", requireSession, async (req, res) => {
+    const { error, value } = sessionModifySchema.validate(req.body)
     if (error)
         return res.status(400).json({
             error: error.details[0].message
         })
 
-    const session = await SessionModel.findOne({ _id: req.body.session })
+    const session = await SessionModel.findOne({
+        _id: req.params.id,
+        userId: (req as any).session.userId
+    })
+
     if (!session)
         return res.status(400).json({
             error: "Invalid session"
         })
 
-    session.sessionName = req.body.sessionName
+    if (typeof value.name === "string") {
+        session.sessionName = value.name
+    }
+
     await session.save()
 
     res.json({
