@@ -1,5 +1,4 @@
 import express, { Request } from "express"
-import Joi from "joi"
 import UserModel from "../models/UserModel.js"
 import { ulid } from "ulid"
 import { optionalSession, requireSession } from "../middleware/auth.js"
@@ -10,13 +9,9 @@ import crypto from "crypto"
 import { gifToWebp } from "../lib/webp.js"
 import { deleteFile, putFile } from "../lib/files.js"
 import PostModel from "../models/PostModel.js"
+import { postNewSchema, postSearchSchema } from "./post.schemas.js"
 
 const router = express.Router()
-
-const newSchema = Joi.object({
-    title: Joi.string().min(3).max(512).required(),
-    "tags[]": Joi.array().items(Joi.string().min(3).max(50)).required(),
-})
 
 router.post("/new", requireSession, upload({
     limits: {
@@ -35,7 +30,7 @@ router.post("/new", requireSession, upload({
             error: "Only GIFs are supported"
         })
 
-    const { error } = newSchema.validate(req.body)
+    const { error, value } = postNewSchema.validate(req.body)
     if (error)
         return res.status(400).json({
             error: error.details[0].message
@@ -66,10 +61,10 @@ router.post("/new", requireSession, upload({
 
     const postObject = {
         _id: id,
-        title: req.body.title,
-        slug: slug(req.body.title, { lower: true }).substr(0, 50),
+        title: value.title,
+        slug: slug(value.title, { lower: true }).substr(0, 40),
         author: user._id,
-        tags: req.body["tags[]"].map(tag => slug(tag, { lower: true })),
+        tags: value["tags[]"].map(tag => slug(tag, { lower: true })),
         file: fileObject,
         private: false,
         favorites: [],
@@ -220,22 +215,14 @@ router.get("/info/:id", optionalSession, async (req, res) => {
     res.json({ ...post._doc })
 })
 
-const searchSchema = Joi.object({
-    query: Joi.string().max(512).required(),
-    skip: Joi.number().integer().min(0).default(0),
-    limit: Joi.number().integer().min(1).max(100).default(10),
-})
-
-router.post("/search", optionalSession, async (req, res) => {
-    const { error, value } = searchSchema.validate(req.body)
+router.get("/search", optionalSession, async (req, res) => {
+    const { error, value } = postSearchSchema.validate(req.query)
     if (error)
         return res.status(400).json({
             error: error.details[0].message
         })
 
-    const query = value.query
-    const skip = value.skip
-    const limit = value.limit
+    const { limit, query, skip } = value
 
     const posts = await PostModel.find({
         $text: {
