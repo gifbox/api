@@ -1,5 +1,4 @@
-import express, { Request } from "express"
-import { parse } from "path"
+import express from "express"
 import { fileExists, getFile } from "../lib/files.js"
 import PostModel from "../models/PostModel.js"
 
