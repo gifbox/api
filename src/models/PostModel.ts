@@ -1,7 +1,20 @@
 import mongoose from "mongoose"
 import { FileInformationSchema } from "./StructureSchemas.js"
+import { FileInformation } from "./Types.js"
 
-const PostSchema = new mongoose.Schema({
+export interface Post {
+    _id: string
+    title: string
+    slug: string
+    author: string
+    tags: string[]
+    file: FileInformation
+    private: boolean
+    favorites: string[]
+    createdAt: number
+}
+
+const PostSchema = new mongoose.Schema<Post>({
     _id: {
         type: String,
     },
@@ -40,6 +53,10 @@ const PostSchema = new mongoose.Schema({
         required: true,
         default: [],
     },
+    createdAt: {
+        type: Number,
+        required: true
+    }
 })
 
 const PostModel = mongoose.model("Post", PostSchema)

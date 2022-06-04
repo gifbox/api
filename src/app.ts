@@ -3,6 +3,7 @@ import { config as dotenvConfig } from "dotenv"
 import cors from "cors"
 import helmet from "helmet"
 import mongoose from "mongoose"
+import { MeiliSearch } from "meilisearch"
 
 dotenvConfig()
 
@@ -17,8 +18,13 @@ export const db = await mongoose.connect(process.env.MONGO_URI, process.env.MONG
         password: process.env.MONGO_PASSWORD
     }
 } : {})
-export const app = express()
 
+export const meilisearch = new MeiliSearch({
+    host: process.env.MEILISEARCH_HOST,
+    apiKey: process.env.MEILISEARCH_MASTERKEY
+})
+
+export const app = express()
 
 app.use(express.json())
 app.use((err, req, res, next) => {
@@ -59,8 +65,13 @@ app.use((err, req, res, next) => {
 })
 
 import { ensureBuckets } from "./lib/files.js"
+import { MeiliInit } from "./lib/meili.js"
 
-app.listen(process.env.PORT, () => {
+app.listen(process.env.PORT, async () => {
     console.log(`Server listening on port ${process.env.PORT}`)
-    ensureBuckets()
+
+    await ensureBuckets()
+
+    const meiliInit = new MeiliInit(meilisearch)
+    await meiliInit.ensureIndices()
 })

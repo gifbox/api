@@ -8,8 +8,9 @@ import { nanoid } from "nanoid"
 import crypto from "crypto"
 import { gifToWebp } from "../lib/webp.js"
 import { deleteFile, putFile } from "../lib/files.js"
-import PostModel from "../models/PostModel.js"
+import PostModel, { Post } from "../models/PostModel.js"
 import { postNewSchema, postSearchSchema } from "./post.schemas.js"
+import { meilisearch } from "../app.js"
 
 const router = express.Router()
 
@@ -68,10 +69,14 @@ router.post("/new", requireSession, upload({
         file: fileObject,
         private: false,
         favorites: [],
+        createdAt: Date.now()
     }
 
     const post = new PostModel(postObject)
     await post.save()
+
+    const postIndex = await meilisearch.getIndex("posts")
+    await postIndex.addDocuments([postObject], { primaryKey: "_id" })
 
     const author = await UserModel.findById(user._id, {
         __v: 0,
@@ -111,6 +116,9 @@ router.delete("/:id", requireSession, async (req, res) => {
 
     await deleteFile(post.file.fileName, "posts")
     await post.remove()
+
+    const postIndex = await meilisearch.getIndex("posts")
+    postIndex.deleteDocument(req.params.id)
 
     res.json({
         success: true,
@@ -194,7 +202,7 @@ router.get("/info/:id", optionalSession, async (req, res) => {
             bucket: 0,
             sha512: 0
         }
-    })
+    }) as any // cast: temporary
 
     if (!post)
         return res.status(400).json({
@@ -224,36 +232,29 @@ router.get("/search", optionalSession, async (req, res) => {
 
     const { limit, query, skip } = value
 
-    const posts = await PostModel.find({
-        $text: {
-            $search: query,
-        },
-        private: false,
-    }, {
-        __v: 0,
-        private: 0,
-        file: {
-            originalFileName: 0,
-            _id: 0,
-            uploadDate: 0,
-            author: 0,
-            extension: 0,
-            mimeType: 0,
-            bucket: 0,
-            sha512: 0
-        }
-    }).skip(skip).limit(limit).sort({
-        score: {
-            $meta: "textScore",
-        },
-    }).exec()
+    const postIndex = await meilisearch.getIndex("posts")
+    const posts = await postIndex.search<Post>(query, {
+        sort: [
+            "createdAt:desc"
+        ],
+        filter: [
+            "private = false"
+        ],
+        offset: skip,
+        limit: limit
+    })
+
+    const hits: (Post & {
+        favorited: boolean
+        favorites: any
+    })[] = [...posts.hits] as any
 
     // Remove the field "private" from the posts and replace favorites with the number of favorites
-    for (let post of posts) {
-        delete post._doc.private
-        post._doc.favorited = post._doc.favorites.includes((req as any).session?.userId ?? "")
-        post._doc.favorites = post._doc.favorites.length
-        post._doc.author = await UserModel.findById(post._doc.author, {
+    for (let hit of hits) {
+        delete hit.private
+        hit.favorited = hit.favorites.includes((req as any).session?.userId ?? "")
+        hit.favorites = hit.favorites.length
+        hit.author = await UserModel.findById(hit.author, {
             __v: 0,
             hashedPassword: 0,
             suspensionState: 0,
@@ -262,7 +263,12 @@ router.get("/search", optionalSession, async (req, res) => {
         })
     }
 
-    res.json(posts)
+    res.json({
+        hits: posts.hits,
+        tookMs: posts.processingTimeMs,
+        numHits: posts.nbHits,
+        numHitsApprox: !posts.exhaustiveNbHits
+    })
 })
 
 export default router
