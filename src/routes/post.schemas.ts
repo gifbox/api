@@ -7,7 +7,7 @@ export interface PostNewSchema {
 
 export const postNewSchema = Joi.object<PostNewSchema>({
     title: Joi.string().min(3).max(512).required(),
-    "tags[]": Joi.array().items(Joi.string().min(3).max(50)).required(),
+    "tags[]": Joi.array().items(Joi.string().min(1).max(50)).required(),
 })
 
 export interface PostSearchSchema {
