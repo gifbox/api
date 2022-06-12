@@ -40,7 +40,14 @@ router.post("/new", requireSession, upload({
     const session = (req as any).session
     const user = await UserModel.findById(session.userId)
 
-    const webp = await gifToWebp(file.data)
+    let webp: Buffer
+    try {
+        webp = await gifToWebp(file.data)
+    } catch (e) {
+        return res.status(400).json({
+            error: "Could not process given file, it is possibly not a GIF"
+        })
+    }
 
     const fileName = `${nanoid(32)}.webp`
     const fileObject = {
