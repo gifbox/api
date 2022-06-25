@@ -26,6 +26,7 @@
     "express": "^4.17.1",
     "express-fileupload": "^1.2.1",
     "ffmpeg-static": "^5.0.0",
+    "file-type": "^17.1.2",
     "fluent-ffmpeg": "^2.1.2",
     "helmet": "^5.1.0",
     "joi": "^17.5.0",

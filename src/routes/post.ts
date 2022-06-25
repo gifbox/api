@@ -6,6 +6,7 @@ import upload, { FileArray, UploadedFile } from "express-fileupload"
 import slug from "slug"
 import { nanoid } from "nanoid"
 import crypto from "crypto"
+import { fileTypeFromBuffer } from "file-type"
 import { gifToWebp } from "../lib/webp.js"
 import { deleteFile, putFile } from "../lib/files.js"
 import PostModel, { Post } from "../models/PostModel.js"
@@ -26,9 +27,11 @@ router.post("/new", requireSession, upload({
             error: "No file uploaded"
         })
 
-    if (file.mimetype !== "image/gif")
+    const fileType = await fileTypeFromBuffer(file.data)
+
+    if (!["image/gif", "image/png", "image/jpeg", "image/webp"].includes(fileType?.mime))
         return res.status(400).json({
-            error: "Only GIFs are supported"
+            error: "Only GIFs and common image formats are supported"
         })
 
     const { error, value } = postNewSchema.validate(req.body)
