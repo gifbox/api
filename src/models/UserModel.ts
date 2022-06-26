@@ -1,7 +1,8 @@
 import mongoose from "mongoose"
 import { FileInformationSchema, SuspensionStateSchema } from "./StructureSchemas.js"
+import { User } from "./Types.js"
 
-const UserSchema = new mongoose.Schema({
+const UserSchema = new mongoose.Schema<User>({
     _id: {
         type: String,
     },

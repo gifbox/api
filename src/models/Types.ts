@@ -12,6 +12,7 @@ export type User = {
     description: string,
     verified: boolean,
     suspensionState: SuspensionState | null,
+    avatar: FileInformation | null,
     followers: string[],
 }
 

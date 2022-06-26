@@ -42,14 +42,14 @@ router.post("/register", async (req, res) => {
 
     const result = await user.save()
 
-    const { hashedPassword, suspensionState, followers, verified, __v, ...rest } = result._doc
+    const { hashedPassword, suspensionState, followers, verified, __v, ...rest } = (result as any)._doc
     res.json(rest)
 })
 
 router.get("/self", requireSession, async (req, res) => {
     const user = await UserModel.findById((req as any).session.userId)
 
-    const { hashedPassword, suspensionState, followers, __v, ...restOfUser } = user._doc
+    const { hashedPassword, suspensionState, followers, __v, ...restOfUser } = (user as any)._doc
     res.json(restOfUser)
 })
 
@@ -74,7 +74,7 @@ router.patch("/self", requireSession, async (req, res) => {
 
     await user.save()
 
-    const { hashedPassword, suspensionState, followers, __v, ...restOfUser } = user._doc
+    const { hashedPassword, suspensionState, followers, __v, ...restOfUser } = (user as any)._doc
     res.json(restOfUser)
 })
 
@@ -85,7 +85,7 @@ router.get("/:username", async (req, res) => {
             error: "User not found"
         })
 
-    const { hashedPassword, suspensionState, followers, __v, email, ...restOfUser } = user._doc
+    const { hashedPassword, suspensionState, followers, __v, email, ...restOfUser } = (user as any)._doc
     res.json(restOfUser)
 })
 
