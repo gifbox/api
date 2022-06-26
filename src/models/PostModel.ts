@@ -10,7 +10,6 @@ export interface Post {
     tags: string[]
     file: FileInformation
     private: boolean
-    favorites: string[]
     createdAt: number
 }
 
@@ -47,11 +46,6 @@ const PostSchema = new mongoose.Schema<Post>({
         type: Boolean,
         required: true,
         default: false,
-    },
-    favorites: {
-        type: [String],
-        required: true,
-        default: [],
     },
     createdAt: {
         type: Number,

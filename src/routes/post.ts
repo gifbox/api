@@ -78,7 +78,6 @@ router.post("/new", requireSession, upload({
         tags: value["tags[]"].map(tag => slug(tag, { lower: true })),
         file: fileObject,
         private: false,
-        favorites: [],
         createdAt: Date.now()
     }
 
@@ -99,8 +98,6 @@ router.post("/new", requireSession, upload({
     res.json({
         ...postObject,
         author,
-        favorites: 0,
-        favorited: false,
     })
 })
 
@@ -144,7 +141,6 @@ router.get("/popular", optionalSession, async (req, res) => {
             error: "Limit must be less than 50"
         })
 
-    // Retrieve the posts, sorted by the number of favorites and uploaded date. Limit the number of posts to the specified limit. Skip the specified number of posts.
     const posts = await PostModel.aggregate([
         {
             $match: {
@@ -153,7 +149,6 @@ router.get("/popular", optionalSession, async (req, res) => {
         },
         {
             $sort: {
-                favorites: -1,
                 uploadDate: -1,
             },
         },
@@ -172,15 +167,12 @@ router.get("/popular", optionalSession, async (req, res) => {
                 file: {
                     fileName: 1,
                     size: 1,
-                },
-                favorites: 1
+                }
             }
         }
     ])
 
     for (let post of posts) {
-        post.favorited = post.favorites.includes((req as any).session?.userId)
-        post.favorites = post.favorites.length
         post.author = await UserModel.findById(post.author, {
             __v: 0,
             hashedPassword: 0,
@@ -219,9 +211,7 @@ router.get("/info/:id", optionalSession, async (req, res) => {
             error: "Post not found"
         })
 
-    delete post._doc.private // Private is a reserved word, we cannot destructure it.
-    post._doc.favorited = post._doc.favorites.includes((req as any).session?.userId ?? "")
-    post._doc.favorites = post._doc.favorites.length
+    delete post._doc.private
     post._doc.author = await UserModel.findById(post._doc.author, {
         __v: 0,
         hashedPassword: 0,
@@ -254,16 +244,11 @@ router.get("/search", optionalSession, async (req, res) => {
         limit: limit
     })
 
-    const hits: (Post & {
-        favorited: boolean
-        favorites: any
-    })[] = [...posts.hits] as any
+    const hits: (Post)[] = [...posts.hits] as any
 
-    // Remove the field "private" from the posts and replace favorites with the number of favorites
+    // Remove the field "private" from the posts
     for (let hit of hits) {
         delete hit.private
-        hit.favorited = hit.favorites.includes((req as any).session?.userId ?? "")
-        hit.favorites = hit.favorites.length
         hit.author = await UserModel.findById(hit.author, {
             __v: 0,
             hashedPassword: 0,
