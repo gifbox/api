@@ -7,7 +7,7 @@ export interface UserRegistrationBody {
 }
 
 export const userRegistrationSchema = Joi.object<UserRegistrationBody>({
-    username: Joi.string().alphanum().min(3).max(50).lowercase().not("self").required(),
+    username: Joi.string().alphanum().min(3).max(50).lowercase().not("self", "favorites").required(),
     email: Joi.string().email().required(),
     password: Joi.string().min(8).required()
 })
@@ -20,4 +20,12 @@ export interface UserModifyBody {
 export const userModifySchema = Joi.object<UserModifyBody>({
     displayName: Joi.string().max(50).trim().optional(),
     description: Joi.string().allow("").max(2048).trim().optional()
+})
+
+export interface UserFavoriteAddBody {
+    url: string
+}
+
+export const userFavoriteAddSchema = Joi.object<UserFavoriteAddBody>({
+    url: Joi.string().uri()
 })
