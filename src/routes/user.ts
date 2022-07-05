@@ -1,10 +1,16 @@
-import express from "express"
+import express, { Request } from "express"
 import UserModel from "../models/UserModel.js"
 import argon2 from "argon2"
 import { ulid } from "ulid"
 import { requireSession } from "../middleware/auth.js"
 import { userFavoriteAddSchema, userModifySchema, userRegistrationSchema } from "./user.schemas.js"
 import FavoriteModel from "../models/FavoriteModel.js"
+import fileUpload, { FileArray, UploadedFile } from "express-fileupload"
+import { fileTypeFromBuffer } from "file-type"
+import { gifToWebp } from "../lib/webp.js"
+import { nanoid } from "nanoid"
+import crypto from "crypto"
+import { deleteFile, putFile } from "../lib/files.js"
 
 const router = express.Router()
 
@@ -146,6 +152,69 @@ router.get("/:username", async (req, res) => {
 
     const { hashedPassword, suspensionState, followers, __v, email, ...restOfUser } = (user as any)._doc
     res.json(restOfUser)
+})
+
+router.post("/avatar", requireSession, fileUpload({
+    limits: {
+        fileSize: 20 * 1024 * 1024 // 20MB
+    }
+}), async (req: Request & { files: FileArray & { file: UploadedFile } }, res) => {
+    const file = req.files.file
+
+    if (!file)
+        return res.status(400).json({
+            error: "No file uploaded"
+        })
+
+    const fileType = await fileTypeFromBuffer(file.data)
+
+    if (!["image/gif", "image/png", "image/jpeg", "image/webp"].includes(fileType?.mime))
+        return res.status(400).json({
+            error: "Only GIFs and common image formats are supported"
+        })
+
+    const user = await UserModel.findById((req as any).session.userId)
+
+    let webp: Buffer
+    try {
+        webp = await gifToWebp(file.data)
+    } catch (e) {
+        return res.status(400).json({
+            error: "Could not process given file, it is possibly not a GIF"
+        })
+    }
+
+    const fileName = `${nanoid(32)}.webp`
+    const fileObject = {
+        _id: ulid(),
+        fileName: fileName,
+        originalFileName: file.name,
+        extension: "webp",
+        bucket: "avatars",
+        mimeType: "image/webp",
+        uploadDate: new Date(),
+        author: user._id,
+        size: file.size,
+        sha512: crypto.createHash("sha512").update(webp).digest("hex"),
+    }
+
+    await putFile(webp, fileName, "avatars")
+
+    user.avatar = fileObject
+    await user.save()
+
+    res.json({ success: true })
+})
+
+router.delete("/avatar", requireSession, async (req, res) => {
+    const user = await UserModel.findById((req as any).session.userId)
+
+    await deleteFile(user.avatar?.fileName, "avatars")
+
+    user.avatar = null
+    await user.save()
+
+    res.json({ success: true })
 })
 
 export default router

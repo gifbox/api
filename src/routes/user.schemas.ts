@@ -7,7 +7,7 @@ export interface UserRegistrationBody {
 }
 
 export const userRegistrationSchema = Joi.object<UserRegistrationBody>({
-    username: Joi.string().alphanum().min(3).max(50).lowercase().not("self", "favorites").required(),
+    username: Joi.string().alphanum().min(3).max(50).lowercase().not("self", "favorites", "avatar").required(),
     email: Joi.string().email().required(),
     password: Joi.string().min(8).required()
 })
