@@ -136,9 +136,9 @@ router.get("/popular", optionalSession, async (req, res) => {
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 10
     const skip = req.query.skip ? parseInt(req.query.skip as string) : 0
 
-    if (limit > 50)
+    if (limit > 100)
         return res.status(400).json({
-            error: "Limit must be less than 50"
+            error: "Limit must be less than 100"
         })
 
     const posts = await PostModel.aggregate([
