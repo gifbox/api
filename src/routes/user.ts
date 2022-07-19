@@ -184,6 +184,11 @@ router.post("/avatar", requireSession, fileUpload({
         })
     }
 
+    // Delete users' previous avatar if it exists
+    if (user.avatar?._id) {
+        await deleteFile(user.avatar.fileName, "avatars")
+    }
+
     const fileName = `${nanoid(32)}.webp`
     const fileObject = {
         _id: ulid(),
