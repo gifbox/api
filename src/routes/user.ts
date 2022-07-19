@@ -159,7 +159,7 @@ router.post("/avatar", requireSession, fileUpload({
         fileSize: 20 * 1024 * 1024 // 20MB
     }
 }), async (req: Request & { files: FileArray & { file: UploadedFile } }, res) => {
-    const file = req.files.file
+    const file = req.files?.file
 
     if (!file)
         return res.status(400).json({

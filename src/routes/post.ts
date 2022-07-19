@@ -20,7 +20,7 @@ router.post("/new", requireSession, upload({
         fileSize: 20 * 1024 * 1024 // 20MB — The image will be converted into webp and GIFs are very large.
     }
 }), async (req: Request & { files: FileArray & { file: UploadedFile } }, res) => {
-    const file = req.files.file
+    const file = req.files?.file
 
     if (!file)
         return res.status(400).json({
