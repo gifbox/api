@@ -1,9 +1,11 @@
+///<reference path="../index.d.ts"/>
 import express from "express"
 import { config as dotenvConfig } from "dotenv"
 import cors from "cors"
 import helmet from "helmet"
 import mongoose from "mongoose"
 import { MeiliSearch } from "meilisearch"
+import { AnalyticsClient } from "./analytics/client.js"
 
 dotenvConfig()
 
@@ -23,6 +25,8 @@ export const meilisearch = new MeiliSearch({
     host: process.env.MEILISEARCH_HOST,
     apiKey: process.env.MEILISEARCH_MASTERKEY
 })
+
+export const analytics = new AnalyticsClient()
 
 export const app = express()
 

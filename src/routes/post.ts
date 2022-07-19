@@ -11,7 +11,7 @@ import { gifToWebp } from "../lib/webp.js"
 import { deleteFile, putFile } from "../lib/files.js"
 import PostModel, { Post } from "../models/PostModel.js"
 import { postNewSchema, postSearchSchema } from "./post.schemas.js"
-import { meilisearch } from "../app.js"
+import { analytics, meilisearch } from "../app.js"
 
 const router = express.Router()
 
@@ -40,7 +40,7 @@ router.post("/new", requireSession, upload({
             error: error.details[0].message
         })
 
-    const session = (req as any).session
+    const session = req.session
     const user = await UserModel.findById(session.userId)
 
     let webp: Buffer
@@ -219,6 +219,9 @@ router.get("/info/:id", optionalSession, async (req, res) => {
         followers: 0,
         email: 0,
     })
+    post._doc.views = await analytics.fetchPostViews(req.params.id)
+
+    await analytics.incrementPostViews(req.params.id)
 
     res.json({ ...post._doc })
 })
@@ -244,7 +247,7 @@ router.get("/search", optionalSession, async (req, res) => {
         limit: limit
     })
 
-    const hits: (Post)[] = [...posts.hits] as any
+    const hits: (Post)[] = [...posts.hits]
 
     // Remove the field "private" from the posts
     for (let hit of hits) {
