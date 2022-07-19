@@ -9,7 +9,7 @@ import crypto from "crypto"
 import { fileTypeFromBuffer } from "file-type"
 import { gifToWebp } from "../lib/webp.js"
 import { deleteFile, putFile } from "../lib/files.js"
-import PostModel, { Post } from "../models/PostModel.js"
+import PostModel, { Post, PostAndViews } from "../models/PostModel.js"
 import { postNewSchema, postSearchSchema } from "./post.schemas.js"
 import { analytics, meilisearch } from "../app.js"
 
@@ -180,6 +180,7 @@ router.get("/popular", optionalSession, async (req, res) => {
             followers: 0,
             email: 0,
         })
+        post.views = await analytics.fetchPostViews(post._id)
     }
 
     res.json(posts)
@@ -247,7 +248,7 @@ router.get("/search", optionalSession, async (req, res) => {
         limit: limit
     })
 
-    const hits: (Post)[] = [...posts.hits]
+    const hits: PostAndViews[] = [...posts.hits] as PostAndViews[]
 
     // Remove the field "private" from the posts
     for (let hit of hits) {
@@ -259,10 +260,11 @@ router.get("/search", optionalSession, async (req, res) => {
             followers: 0,
             email: 0,
         })
+        hit.views = await analytics.fetchPostViews(hit._id)
     }
 
     res.json({
-        hits: posts.hits,
+        hits,
         tookMs: posts.processingTimeMs,
         numHits: posts.nbHits,
         numHitsApprox: !posts.exhaustiveNbHits

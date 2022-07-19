@@ -13,6 +13,10 @@ export interface Post {
     createdAt: number
 }
 
+export type PostAndViews = Post & {
+    views: number
+}
+
 const PostSchema = new mongoose.Schema<Post>({
     _id: {
         type: String,
