@@ -49,19 +49,19 @@ router.post("/create", async (req, res) => {
 })
 
 router.get("/sessions", requireSession, async (req, res) => {
-    const sessions = await SessionModel.find({ userId: (req as any).session.userId }, { __v: 0, token: 0, userId: 0 })
+    const sessions = await SessionModel.find({ userId: req.session.userId }, { __v: 0, token: 0, userId: 0 })
     res.json(sessions)
 })
 
 router.get("/current", requireSession, async (req, res) => {
-    const session = await SessionModel.findOne({ _id: (req as any).session._id }, { __v: 0 })
+    const session = await SessionModel.findOne({ _id: req.session._id }, { __v: 0 })
     res.json(session)
 })
 
 router.delete("/:id", requireSession, async (req, res) => {
     const session = await SessionModel.findOne({
         _id: req.params.id,
-        userId: (req as any).session.userId
+        userId: req.session.userId
     })
     if (!session)
         return res.status(400).json({
@@ -84,7 +84,7 @@ router.patch("/:id", requireSession, async (req, res) => {
 
     const session = await SessionModel.findOne({
         _id: req.params.id,
-        userId: (req as any).session.userId
+        userId: req.session.userId
     })
 
     if (!session)

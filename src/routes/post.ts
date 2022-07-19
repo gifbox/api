@@ -107,7 +107,7 @@ router.delete("/:id", requireSession, async (req, res) => {
             error: "No post id"
         })
 
-    const session = (req as any).session
+    const session = req.session
     const user = await UserModel.findById(session.userId)
 
     const post = await PostModel.findById(req.params.id)

@@ -54,14 +54,14 @@ router.post("/register", async (req, res) => {
 })
 
 router.get("/self", requireSession, async (req, res) => {
-    const user = await UserModel.findById((req as any).session.userId)
+    const user = await UserModel.findById(req.session.userId)
 
     const { hashedPassword, suspensionState, followers, __v, ...restOfUser } = (user as any)._doc
     res.json(restOfUser)
 })
 
 router.patch("/self", requireSession, async (req, res) => {
-    const user = await UserModel.findById((req as any).session.userId)
+    const user = await UserModel.findById(req.session.userId)
     const { error, value } = userModifySchema.validate(req.body)
 
     if (error) {
@@ -97,7 +97,7 @@ router.post("/favorites", requireSession, async (req, res) => {
 
     const existingFavorite = await FavoriteModel.findOne({
         url: value.url,
-        author: (req as any).session.userId
+        author: req.session.userId
     })
     if (existingFavorite) {
         res.status(400).json({
@@ -108,7 +108,7 @@ router.post("/favorites", requireSession, async (req, res) => {
 
     const favorite = new FavoriteModel({
         _id: ulid(),
-        author: (req as any).session.userId,
+        author: req.session.userId,
         favoritedAt: Date.now(),
         url: value.url
     })
@@ -121,7 +121,7 @@ router.post("/favorites", requireSession, async (req, res) => {
 router.delete("/favorites/:id", requireSession, async (req, res) => {
     const existingFavorite = await FavoriteModel.findOne({
         _id: req.params.id,
-        author: (req as any).session.userId
+        author: req.session.userId
     })
     if (!existingFavorite) {
         res.status(404).json({
@@ -137,7 +137,7 @@ router.delete("/favorites/:id", requireSession, async (req, res) => {
 
 router.get("/favorites", requireSession, async (req, res) => {
     const favorites = await FavoriteModel.find({
-        author: (req as any).session.userId,
+        author: req.session.userId,
     })
 
     res.json(favorites)
@@ -173,7 +173,7 @@ router.post("/avatar", requireSession, fileUpload({
             error: "Only GIFs and common image formats are supported"
         })
 
-    const user = await UserModel.findById((req as any).session.userId)
+    const user = await UserModel.findById(req.session.userId)
 
     let webp: Buffer
     try {
@@ -207,7 +207,7 @@ router.post("/avatar", requireSession, fileUpload({
 })
 
 router.delete("/avatar", requireSession, async (req, res) => {
-    const user = await UserModel.findById((req as any).session.userId)
+    const user = await UserModel.findById(req.session.userId)
 
     await deleteFile(user.avatar?.fileName, "avatars")
 
