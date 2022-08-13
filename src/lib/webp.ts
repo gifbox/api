@@ -18,7 +18,7 @@ export const gifToWebp = async (gif: Buffer) => {
             .addOption([
                 "-vcodec", "webp",
                 "-loop", "0",
-                "-pix_fmt", "yuv420p",
+                "-pix_fmt", "yuva420p",
             ])
             .output(tempWebp)
             .on("end", async () => {
