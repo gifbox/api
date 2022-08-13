@@ -40,6 +40,18 @@ router.post("/new", requireSession, upload({
             error: error.details[0].message
         })
 
+    let tags: string[] | string = req.body["tags[]"] ?? []
+
+    if (typeof tags === "string") {
+        tags = [tags]
+    }
+
+    if (tags.some(x => x.length <= 0 || x.length >= 512)) {
+        return res.status(400).json({
+            error: "tags[] must consist of items that are not empty and not longer than 512 characters"
+        })
+    }
+
     const session = req.session
     const user = await UserModel.findById(session.userId)
 
@@ -75,7 +87,7 @@ router.post("/new", requireSession, upload({
         title: value.title,
         slug: slug(value.title, { lower: true }).substr(0, 40),
         author: user._id,
-        tags: value["tags[]"].map(tag => slug(tag, { lower: true })),
+        tags: tags.map(tag => slug(tag, { lower: true })),
         file: fileObject,
         private: false,
         createdAt: Date.now()

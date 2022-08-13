@@ -1,0 +1,36 @@
+version: '3.4'
+
+services:
+  mongo:
+    image: mongo:latest
+    ports:
+      - 5001:27017
+    volumes:
+      - ./run/mongo:/data/db
+  minio:
+    image: minio/minio:latest
+    command: server --console-address ":9001" /data
+    environment:
+      MINIO_ROOT_USER: gifbox
+      MINIO_ROOT_PASSWORD: gifbox123
+    ports:
+      - 5005:9000
+      - 5002:9001
+    volumes:
+      - ./run/minio:/data
+  meilisearch:
+    image: getmeili/meilisearch:latest
+    environment:
+      MEILI_MASTER_KEY: gifbox123
+      MEILI_NO_ANALYTICS: "true"
+    ports:
+      - 5003:7700
+    volumes:
+      - ./run/meilisearch:/meili_data
+  redis:
+    image: redis:latest
+    ports:
+      - 5004:6379
+    volumes:
+      - ./run/redis:/data
+    command: redis-server --save 60 1 --loglevel warning

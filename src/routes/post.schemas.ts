@@ -2,13 +2,11 @@ import Joi from "joi"
 
 export interface PostNewSchema {
     title: string
-    "tags[]": string[]
 }
 
 export const postNewSchema = Joi.object<PostNewSchema>({
     title: Joi.string().min(3).max(512).required(),
-    "tags[]": Joi.array().items(Joi.string().min(1).max(50)).required(),
-})
+}).options({ allowUnknown: true })
 
 export interface PostSearchSchema {
     query: string
