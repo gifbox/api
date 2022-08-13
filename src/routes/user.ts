@@ -180,7 +180,7 @@ router.post("/avatar", requireSession, fileUpload({
         webp = await gifToWebp(file.data)
     } catch (e) {
         return res.status(400).json({
-            error: "Could not process given file, it is possibly not a GIF"
+            error: "Could not process given file, it is possibly not the right format"
         })
     }
 

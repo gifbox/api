@@ -2,6 +2,7 @@ import ffmpegPath from "ffmpeg-static"
 import ffmpeg from "fluent-ffmpeg"
 import temp from "temp"
 import fs from "fs/promises"
+import { existsSync } from "fs"
 
 temp.track()
 
@@ -22,6 +23,8 @@ export const gifToWebp = async (gif: Buffer) => {
             ])
             .output(tempWebp)
             .on("end", async () => {
+                if (!existsSync(tempWebp))
+                    return reject(new Error("webp could not be generated - please try a different file"))
                 const webp = await fs.readFile(tempWebp)
                 temp.cleanupSync()
                 resolve(webp)
