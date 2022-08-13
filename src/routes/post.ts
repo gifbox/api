@@ -141,49 +141,33 @@ router.get("/popular", optionalSession, async (req, res) => {
             error: "Limit must be less than 100"
         })
 
-    const posts = await PostModel.aggregate([
-        {
-            $match: {
-                private: false,
-            }
-        },
-        {
-            $sort: {
-                uploadDate: -1,
-            },
-        },
-        {
-            $skip: skip,
-        },
-        {
-            $limit: limit,
-        },
-        {
-            $project: {
-                title: 1,
-                slug: 1,
-                author: 1,
-                tags: 1,
-                file: {
-                    fileName: 1,
-                    size: 1,
-                }
-            }
-        }
-    ])
+    const postIndex = await meilisearch.getIndex("posts")
+    const posts = await postIndex.search<Post>("", {
+        sort: [
+            "createdAt:desc"
+        ],
+        filter: [
+            "private = false"
+        ],
+        offset: skip,
+        limit: limit
+    })
 
-    for (let post of posts) {
-        post.author = await UserModel.findById(post.author, {
+    const hits: PostAndViews[] = [...posts.hits] as PostAndViews[]
+
+    for (let hit of hits) {
+        delete hit.private
+        hit.author = await UserModel.findById(hit.author, {
             __v: 0,
             hashedPassword: 0,
             suspensionState: 0,
             followers: 0,
             email: 0,
         })
-        post.views = await analytics.fetchPostViews(post._id)
+        hit.views = await analytics.fetchPostViews(hit._id)
     }
 
-    res.json(posts)
+    res.json(hits)
 })
 
 router.get("/info/:id", optionalSession, async (req, res) => {
